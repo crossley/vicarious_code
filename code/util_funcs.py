@@ -1,26 +1,43 @@
 from imports import *
 
 
-def load_trial_mat(subject):
+def load_trial_mat(data_dir_behaviour, subject):
+    mat_1 = scipy.io.loadmat(
+        data_dir_behaviour
+        + "/P"
+        + subject
+        + "_behavioural/P"
+        + subject
+        + "_Session01_Touch_Processing_EEG.mat"
+    )
+    mat_2 = scipy.io.loadmat(
+        data_dir_behaviour
+        + "/P"
+        + subject
+        + "_behavioural/P"
+        + subject
+        + "_Session01_Touch_Processing_EEG.mat"
+    )
+    mat_3 = scipy.io.loadmat(
+        data_dir_behaviour
+        + "/P"
+        + subject
+        + "_behavioural/P"
+        + subject
+        + "_Session01_Touch_Processing_EEG.mat"
+    )
 
-    mat_1 = scipy.io.loadmat(subject + '/' + subject[-3:] +
-                             '_Session01_Touch_Processing_EEG.mat')
-    mat_2 = scipy.io.loadmat(subject + '/' + subject[-3:] +
-                             '_Session02_Touch_Processing_EEG.mat')
-    mat_3 = scipy.io.loadmat(subject + '/' + subject[-3:] +
-                             '_Session03_Touch_Processing_EEG.mat')
-
-    trial_mat_1 = mat_1['trial_mat']
-    trial_mat_2 = mat_2['trial_mat']
-    trial_mat_3 = mat_3['trial_mat']
+    trial_mat_1 = mat_1["trial_mat"]
+    trial_mat_2 = mat_2["trial_mat"]
+    trial_mat_3 = mat_3["trial_mat"]
 
     trial_mat_1 = np.transpose(trial_mat_1, (0, 2, 1))
     trial_mat_2 = np.transpose(trial_mat_2, (0, 2, 1))
     trial_mat_3 = np.transpose(trial_mat_3, (0, 2, 1))
 
-    trial_mat_1 = np.reshape(trial_mat_1, (-1, 10), order='F')
-    trial_mat_2 = np.reshape(trial_mat_2, (-1, 10), order='F')
-    trial_mat_3 = np.reshape(trial_mat_3, (-1, 10), order='F')
+    trial_mat_1 = np.reshape(trial_mat_1, (-1, 10), order="F")
+    trial_mat_2 = np.reshape(trial_mat_2, (-1, 10), order="F")
+    trial_mat_3 = np.reshape(trial_mat_3, (-1, 10), order="F")
 
     trial_mat_1 = trial_mat_1[(trial_mat_1 != 0).any(axis=1), :]
     trial_mat_2 = trial_mat_2[(trial_mat_2 != 0).any(axis=1), :]
@@ -36,26 +53,24 @@ def load_trial_mat(subject):
 
 
 def load_epochs(subject, trial_mat, detrend_epoch_dir):
-
-    epochs = mne.io.read_epochs_eeglab(detrend_epoch_dir + 'sub-' +
-                                       subject[-2:] +
-                                       '_task-touchdecoding_continuous.set')
+    epochs = mne.io.read_epochs_eeglab(
+        detrend_epoch_dir + "sub-" + subject[-2:] + "_task-touchdecoding_continuous.set"
+    )
 
     # TODO: Clarify mode == visual is and what else is possible / interesting
     # finger | mode == visual
     target = trial_mat[:, 5]
     trial_mat = trial_mat[target == 1, :]
-    events_finger = epochs.events[(epochs.events[:, 2] == 1) &
-                                  (target == 1), :]
+    events_finger = epochs.events[(epochs.events[:, 2] == 1) & (target == 1), :]
     events_finger[:, 2] = trial_mat[:, 2]
     visual_ind = trial_mat[:, 0] == 1
     tactile_ind = trial_mat[:, 0] == 2
     events_finger[tactile_ind, 2] += 2
     events_finger_dict = {
-        'visual_thumb': 1,
-        'visual_pinky': 2,
-        'tactile_thumb': 3,
-        'tactile_pinky': 4
+        "visual_thumb": 1,
+        "visual_pinky": 2,
+        "tactile_thumb": 3,
+        "tactile_pinky": 4,
     }
     epochs.events = events_finger
 
@@ -70,46 +85,40 @@ def load_epochs(subject, trial_mat, detrend_epoch_dir):
 
 
 def time_gen(X, y, cv, clf, metric, tag):
+    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
 
-    pipe = Pipeline([('scl', Scaler(epochs.info)), ('vec', Vectorizer()),
-                     ('clf', clf)])
-
-    time_gen = GeneralizingEstimator(pipe,
-                                     n_jobs=-1,
-                                     scoring=metric,
-                                     verbose=True)
+    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
 
     scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
     scores = np.mean(scores, 0)
     np.savetxt(
-        '/Users/mq20185996/Dropbox/crazly/scores_' + tag + '_' + s[-3:] +
-        '.txt', scores)
+        "/Users/mq20185996/Dropbox/crazly/scores_" + tag + "_" + s[-3:] + ".txt", scores
+    )
 
 
 def run_time_gens():
-
     # within mode: everything on touch
-    tag = 'touchtouch'
+    tag = "touchtouch"
     XX = X[(y == 3) | (y == 4)]
     yy = y[(y == 3) | (y == 4)]
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     cv = list(skf.split(XX, yy))
-    clf = LinearDiscriminantAnalysis(solver='svd')
-    tag = tag + '_lda'
+    clf = LinearDiscriminantAnalysis(solver="svd")
+    tag = tag + "_lda"
     time_gen(XX, yy, cv, clf, metric, tag)
 
     # within mode: everything on vision
-    tag = 'visvis'
+    tag = "visvis"
     XX = X[(y == 1) | (y == 2)]
     yy = y[(y == 1) | (y == 2)]
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     cv = list(skf.split(XX, yy))
-    clf = LinearDiscriminantAnalysis(solver='svd')
-    tag = tag + '_lda'
+    clf = LinearDiscriminantAnalysis(solver="svd")
+    tag = tag + "_lda"
     time_gen(XX, yy, cv, clf, metric, tag)
 
     # cross mode: train on touch / test on vision
-    tag = 'touchvis'
+    tag = "touchvis"
     XX = X
     yy = y
     train_ind = np.where((yy == 3) | (yy == 4))[0]
@@ -119,11 +128,11 @@ def run_time_gens():
     train_ind = np.array_split(train_ind, n_splits)
     test_ind = np.array_split(test_ind, n_splits)
     cv = list(zip(train_ind, test_ind))
-    tag = tag + '_lda'
+    tag = tag + "_lda"
     time_gen(XX, yy, cv, clf, metric, tag)
 
     # cross mode: train on vision / test on touch
-    tag = 'vistouch'
+    tag = "vistouch"
     XX = X
     yy = y
     train_ind = np.where((yy == 1) | (yy == 2))[0]
@@ -133,15 +142,14 @@ def run_time_gens():
     train_ind = np.array_split(train_ind, n_splits)
     test_ind = np.array_split(test_ind, n_splits)
     cv = list(zip(train_ind, test_ind))
-    clf = LinearDiscriminantAnalysis(solver='svd')
-    tag = tag + '_lda'
+    clf = LinearDiscriminantAnalysis(solver="svd")
+    tag = tag + "_lda"
     time_gen(XX, yy, cv, clf, metric, tag)
 
 
 def tune_hyper_params(X, y):
-
     # within mode: everything on touch
-    tag = 'touchtouch'
+    tag = "touchtouch"
     XX = X[(y == 3) | (y == 4)]
     yy = y[(y == 3) | (y == 4)]
 
@@ -152,10 +160,9 @@ def tune_hyper_params(X, y):
     # Split the dataset in two equal parts. One part to be used to generate
     # train / test splits for each grid, point, and the other part to be used
     # for overall validation.
-    X_train, X_test, y_train, y_test = train_test_split(XX,
-                                                        yy,
-                                                        test_size=0.5,
-                                                        random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        XX, yy, test_size=0.5, random_state=0
+    )
 
     train_ind_grid = np.where((y_train == 3) | (y_train == 4))[0]
     test_ind_grid = np.where((y_train == 3) | (y_train == 4))[0]
@@ -168,27 +175,27 @@ def tune_hyper_params(X, y):
 
     cv_grid = list(zip(train_ind_grid, test_ind_grid))
 
-    pipe = Pipeline([('scl', Scaler(epochs.info)), ('vec', Vectorizer()),
-                     ('svc', SVC())])
+    pipe = Pipeline(
+        [("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("svc", SVC())]
+    )
 
     param_grid = [
+        {"svc__C": [0.1, 1, 10, 100, 1000], "svc__kernel": ["linear"]},
         {
-            'svc__C': [0.1, 1, 10, 100, 1000],
-            'svc__kernel': ['linear']
-        },
-        {
-            'svc__C': [0.1, 1, 10, 100, 1000],
-            'svc__gamma': [0.001, 0.0001],
-            'svc__kernel': ['rbf']
+            "svc__C": [0.1, 1, 10, 100, 1000],
+            "svc__gamma": [0.001, 0.0001],
+            "svc__kernel": ["rbf"],
         },
     ]
 
-    clf = GridSearchCV(estimator=pipe,
-                       param_grid=param_grid,
-                       scoring=metric,
-                       cv=cv_grid,
-                       verbose=1,
-                       n_jobs=-1)
+    clf = GridSearchCV(
+        estimator=pipe,
+        param_grid=param_grid,
+        scoring=metric,
+        cv=cv_grid,
+        verbose=1,
+        n_jobs=-1,
+    )
     clf.fit(X_train, y_train)
 
     # TODO: sort out how to use X_test to select best params
