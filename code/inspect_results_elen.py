@@ -18,6 +18,7 @@ sub_nums = np.intersect1d(sub_nums_eeg, sub_nums_behaviour)
 
 sub_nums = [sub_nums[0]]
 
+epochs_list = []
 for s in sub_nums:
     print(s)
 
@@ -25,8 +26,7 @@ for s in sub_nums:
     raw, events = load_raw(data_dir_eeg, s)
     epochs = compute_epochs(raw, events, trial_mat)
 
-    # TODO: finish development of a preprocessing pipeline
-    # TODO: trial-masked robust detrending
+    epochs_list.append(epochs)
 
     # NOTE: Combine across trials but keep sensors separate
     fig, ax = plt.subplots(2, 2, squeeze=False, figsize=(8, 5))
@@ -36,8 +36,7 @@ for s in sub_nums:
         )
         ax.flatten()[i].set_title(k)
     plt.tight_layout()
-    plt.show()
-    # plt.savefig('figures/fig_epochs_sub_' + s + '.pdf')
+    plt.savefig('figures/fig_epochs_sub_' + s + '.pdf')
 
     # TODO: Is information present at all (CSP classifier)?
     # TODO: When is information present (time gen)?
@@ -54,3 +53,5 @@ for s in sub_nums:
     # # TODO plot all on a grid with color bar
     # plt.imshow(scores_touchtouch)
     # plt.show()
+
+epochs_standard = mne.concatenate_epochs(epochs_list)

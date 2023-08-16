@@ -63,19 +63,6 @@ def load_raw(data_dir_eeg, subject):
         data_dir_eeg + "/P" + subject + "_eeg/P" + subject + "_S03.bdf", preload=True
     )
 
-    # TODO: sort out other preprocessing steps
-
-    # Low pass filter
-    current_sfreq = raw_1.info["sfreq"]
-    desired_sfreq = 90
-    decim = np.round(current_sfreq / desired_sfreq).astype(int)
-    obtained_sfreq = current_sfreq / decim
-    lowpass_freq = obtained_sfreq / 3.0
-
-    raw_1 = raw_1.copy().filter(l_freq=None, h_freq=lowpass_freq)
-    raw_2 = raw_2.copy().filter(l_freq=None, h_freq=lowpass_freq)
-    raw_3 = raw_3.copy().filter(l_freq=None, h_freq=lowpass_freq)
-
     # TODO: See find_events doc for an explanation of the &= operation below.
     # Although also note that it might not be doing anything at all. Probably
     # worth a bit more investigation.
@@ -85,6 +72,17 @@ def load_raw(data_dir_eeg, subject):
     events_2[:, 2] &= 2**16 - 1
     events_3 = mne.find_events(raw_3, consecutive=False)
     events_3[:, 2] &= 2**16 - 1
+
+    # TODO: sort out other preprocessing steps
+    # 1. down sample to 256 hz
+    # 2. re-reference to the common average
+    # 3. trial-masked robust detrending
+    #    no other filtering
+    #    mask events, bad data, and bad channels
+    #    epoch from −1100 to 1802 ms
+    #    add pad length of 50 s
+    #    fit 30th order polynomial
+    # 4. baseline correction from -1100 to -1000
 
     raw, events = mne.concatenate_raws(
         raws=[raw_1, raw_2, raw_3],
