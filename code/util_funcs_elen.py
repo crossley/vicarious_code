@@ -63,6 +63,8 @@ def load_raw(data_dir_eeg, subject):
         data_dir_eeg + "/P" + subject + "_eeg/P" + subject + "_S03.bdf", preload=True
     )
 
+    # TODO: sort out other preprocessing steps
+
     # Low pass filter
     current_sfreq = raw_1.info["sfreq"]
     desired_sfreq = 90
@@ -199,25 +201,25 @@ def compute_epochs(raw, events, trial_mat):
     events[events[:, 2] == 4, 2] = 4  # trial start; unchanged.
     events_dict = {"touch": 1, "trial": 4}
 
-    # finger | mode == visual
-    events_finger = events[events[:, 2] == 1, :]
-    events_finger[:, 2] = trial_mat[:, 2]
+    target = trial_mat[:, 5]
+    trial_mat = trial_mat[target == 1, :]
+    events_touch = events[(events[:, 2] == events_dict["touch"]), :]
+    events_touch = events_touch[target == 1]
+    events_touch[:, 2] = trial_mat[:, 2]
     visual_ind = trial_mat[:, 0] == 1
     tactile_ind = trial_mat[:, 0] == 2
-    events_finger[tactile_ind, 2] += 2
-    events_finger_dict = {
+    events_touch[tactile_ind, 2] += 2
+    events_touch_dict = {
         "visual_thumb": 1,
         "visual_pinky": 2,
         "tactile_thumb": 3,
         "tactile_pinky": 4,
     }
 
-    ev = events_finger
-    ev_dict = events_finger_dict
     epochs = mne.Epochs(
         raw,
-        ev,
-        event_id=ev_dict,
+        events_touch,
+        event_id=events_touch_dict,
         tmin=-1.1,
         tmax=1.8,
         # decim=decim,
@@ -256,50 +258,48 @@ def load_epochs(data_dir_epochs, subject, trial_mat):
     epochs.events = events_finger
 
     # resample to reduce compute time
-    # epochs = epochs.resample(sfreq=90)
+    epochs = epochs.resample(sfreq=90)
 
+    return epochs
+
+
+def run_time_gens(epochs):
     X = epochs.get_data()
-    X = X[target == 1, :]
     y = epochs.events[:, -1]
 
-    return epochs, X, y
+   # TODO: down sample here for test purposes
 
+    n_splits = 12
+    metric = "accuracy"
 
-def time_gen(X, y, cv, clf, metric, tag):
-    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
-
-    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
-
-    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
-    scores = np.mean(scores, 0)
-    np.savetxt(
-        "/Users/mq20185996/Dropbox/crazly/scores_" + tag + "_" + s[-3:] + ".txt", scores
-    )
-
-
-def run_time_gens():
     # within mode: everything on touch
-    tag = "touchtouch"
+    # touchtouch
     XX = X[(y == 3) | (y == 4)]
     yy = y[(y == 3) | (y == 4)]
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     cv = list(skf.split(XX, yy))
     clf = LinearDiscriminantAnalysis(solver="svd")
-    tag = tag + "_lda"
-    time_gen(XX, yy, cv, clf, metric, tag)
+    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
+    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
+    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = np.mean(scores, 0)
+    scores_touchtouch = scores
 
     # within mode: everything on vision
-    tag = "visvis"
+    # visvis
     XX = X[(y == 1) | (y == 2)]
     yy = y[(y == 1) | (y == 2)]
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     cv = list(skf.split(XX, yy))
     clf = LinearDiscriminantAnalysis(solver="svd")
-    tag = tag + "_lda"
-    time_gen(XX, yy, cv, clf, metric, tag)
+    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
+    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
+    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = np.mean(scores, 0)
+    scores_visvis = scores
 
     # cross mode: train on touch / test on vision
-    tag = "touchvis"
+    # touchvis
     XX = X
     yy = y
     train_ind = np.where((yy == 3) | (yy == 4))[0]
@@ -309,11 +309,14 @@ def run_time_gens():
     train_ind = np.array_split(train_ind, n_splits)
     test_ind = np.array_split(test_ind, n_splits)
     cv = list(zip(train_ind, test_ind))
-    tag = tag + "_lda"
-    time_gen(XX, yy, cv, clf, metric, tag)
+    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
+    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
+    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = np.mean(scores, 0)
+    scores_touchvis = scores
 
     # cross mode: train on vision / test on touch
-    tag = "vistouch"
+    # vistouch
     XX = X
     yy = y
     train_ind = np.where((yy == 1) | (yy == 2))[0]
@@ -324,8 +327,13 @@ def run_time_gens():
     test_ind = np.array_split(test_ind, n_splits)
     cv = list(zip(train_ind, test_ind))
     clf = LinearDiscriminantAnalysis(solver="svd")
-    tag = tag + "_lda"
-    time_gen(XX, yy, cv, clf, metric, tag)
+    pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
+    time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
+    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = np.mean(scores, 0)
+    scores_vistouch = scores
+
+    return (scores_touchtouch, scores_visvis, scores_touchvis, scores_vistouch)
 
 
 def tune_hyper_params(X, y):
