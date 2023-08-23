@@ -1,12 +1,94 @@
 from imports import *
 
+def create_sub_nums_sophie_trmdt():
+    dir_data_behaviour = "/Users/mq20185996/projects/crazly/raw_data"
+    dir_data_eeg = "/Users/mq20185996/projects/crazly/raw_data/"
+    dir_figs = "../figures/sophie/"
+    dir_results = "../results/sophie/"
+
+    sub_dirs_eeg = np.sort(os.listdir(dir_data_eeg))
+    sub_dirs_eeg = sub_dirs_eeg[sub_dirs_eeg != ".DS_Store"]
+    sub_nums_eeg = [x[1:3] for x in sub_dirs_eeg]
+
+    sub_dirs_behaviour = np.sort(os.listdir(dir_data_behaviour))
+    sub_dirs_behaviour = sub_dirs_behaviour[sub_dirs_behaviour != ".DS_Store"]
+    sub_nums_behaviour = [x[1:3] for x in sub_dirs_behaviour]
+
+    sub_nums = np.intersect1d(sub_nums_eeg, sub_nums_behaviour)
+
+    exclude_subs = ["01", "10", "13", "16", "18", "32", "33"]
+    sub_nums = [x for x in sub_nums if x not in exclude_subs]
+
+    subs_non_mts = [1, 2, 3, 4, 5, 6, 7, 10, 15, 17, 19, 22, 25, 26, 27, 34, 37]
+    subs_non_mts = ["{0:0=2d}".format(x) for x in subs_non_mts]
+
+    subs_mts = [
+        8, 9, 12, 13, 14, 16, 18, 20, 21, 23, 24, 28, 29, 30, 31, 32, 33, 35, 36,
+        38, 39, 40
+    ]
+    subs_mts = ["{0:0=2d}".format(x) for x in subs_mts]
+
+    sub_nums = subs_mts
+
+    return sub_nums, dir_data_behaviour, dir_data_eeg, dir_figs, dir_results
+
+def create_sub_nums_sophie():
+    dir_data_behaviour = "/Users/mq20185996/projects/crazly/raw_data"
+    dir_data_eeg = "/Users/mq20185996/projects/crazly/raw_data/"
+    dir_figs = "../figures/sophie/"
+    dir_results = "../results/sophie/"
+
+    sub_dirs_eeg = np.sort(os.listdir(dir_data_eeg))
+    sub_dirs_eeg = sub_dirs_eeg[sub_dirs_eeg != ".DS_Store"]
+    sub_nums_eeg = [x[1:3] for x in sub_dirs_eeg]
+
+    sub_dirs_behaviour = np.sort(os.listdir(dir_data_behaviour))
+    sub_dirs_behaviour = sub_dirs_behaviour[sub_dirs_behaviour != ".DS_Store"]
+    sub_nums_behaviour = [x[1:3] for x in sub_dirs_behaviour]
+
+    sub_nums = np.intersect1d(sub_nums_eeg, sub_nums_behaviour)
+
+    exclude_subs = ["01", "10", "13", "16", "18", "32", "33"]
+    sub_nums = [x for x in sub_nums if x not in exclude_subs]
+
+    subs_non_mts = [1, 2, 3, 4, 5, 6, 7, 10, 15, 17, 19, 22, 25, 26, 27, 34, 37]
+    subs_non_mts = ["{0:0=2d}".format(x) for x in subs_non_mts]
+
+    subs_mts = [
+        8, 9, 12, 13, 14, 16, 18, 20, 21, 23, 24, 28, 29, 30, 31, 32, 33, 35, 36,
+        38, 39, 40
+    ]
+    subs_mts = ["{0:0=2d}".format(x) for x in subs_mts]
+
+    sub_nums = subs_mts
+
+    return sub_nums, dir_data_behaviour, dir_data_eeg, dir_figs, dir_results
+
+def create_sub_nums_elen():
+    dir_data_behaviour = "/Users/mq20185996/projects/crazly/elen/data_behaviour"
+    dir_data_eeg = "/Users/mq20185996/projects/crazly/elen/data_eeg"
+    dir_figs = "../figures/elen/"
+    dir_results = "../results/elen/"
+
+    sub_dirs_eeg = np.sort(os.listdir(dir_data_eeg))
+    sub_dirs_eeg = sub_dirs_eeg[sub_dirs_eeg != ".DS_Store"]
+    sub_nums_eeg = [x[1:3] for x in sub_dirs_eeg]
+
+    sub_dirs_behaviour = np.sort(os.listdir(dir_data_behaviour))
+    sub_dirs_behaviour = sub_dirs_behaviour[sub_dirs_behaviour != ".DS_Store"]
+    sub_nums_behaviour = [x[1:3] for x in sub_dirs_behaviour]
+
+    sub_nums = np.intersect1d(sub_nums_eeg, sub_nums_behaviour)
+    sub_nums = np.delete(sub_nums, 1) # TODO fix weird subject
+
+    return sub_nums, dir_data_behaviour, dir_data_eeg, dir_figs, dir_results
 
 def load_trial_mat(data_dir_behaviour, subject):
     mat_1 = scipy.io.loadmat(
         data_dir_behaviour
         + "/P"
         + subject
-        + "_behavioural/P"
+        + "/P"
         + subject
         + "_Session01_Touch_Processing_EEG.mat"
     )
@@ -14,7 +96,7 @@ def load_trial_mat(data_dir_behaviour, subject):
         data_dir_behaviour
         + "/P"
         + subject
-        + "_behavioural/P"
+        + "/P"
         + subject
         + "_Session02_Touch_Processing_EEG.mat"
     )
@@ -22,7 +104,7 @@ def load_trial_mat(data_dir_behaviour, subject):
         data_dir_behaviour
         + "/P"
         + subject
-        + "_behavioural/P"
+        + "/P"
         + subject
         + "_Session03_Touch_Processing_EEG.mat"
     )
@@ -54,13 +136,13 @@ def load_trial_mat(data_dir_behaviour, subject):
 
 def load_raw(data_dir_eeg, subject):
     raw_1 = mne.io.read_raw_bdf(
-        data_dir_eeg + "/P" + subject + "_eeg/P" + subject + "_S01.bdf", preload=True
+        data_dir_eeg + "/P" + subject + "/P" + subject + "_S01.bdf", preload=True
     )
     raw_2 = mne.io.read_raw_bdf(
-        data_dir_eeg + "/P" + subject + "_eeg/P" + subject + "_S02.bdf", preload=True
+        data_dir_eeg + "/P" + subject + "/P" + subject + "_S02.bdf", preload=True
     )
     raw_3 = mne.io.read_raw_bdf(
-        data_dir_eeg + "/P" + subject + "_eeg/P" + subject + "_S03.bdf", preload=True
+        data_dir_eeg + "/P" + subject + "/P" + subject + "_S03.bdf", preload=True
     )
 
     # TODO: See find_events doc for an explanation of the &= operation below.
@@ -79,7 +161,7 @@ def load_raw(data_dir_eeg, subject):
     # 3. trial-masked robust detrending
     #    no other filtering
     #    mask events, bad data, and bad channels
-    #    epoch from −1100 to 1802 ms
+    #    epoch from −1100 to 1800 ms
     #    add pad length of 50 s
     #    fit 30th order polynomial
     # 4. baseline correction from -1100 to -1000
@@ -220,54 +302,160 @@ def compute_epochs(raw, events, trial_mat):
         event_id=events_touch_dict,
         tmin=-1.1,
         tmax=1.8,
-        # decim=decim,
-        # baseline=(-0.5, 0.0),
-        detrend=None,
-        # reject=None,
-        # reject=dict(eeg=1e-3),
+        baseline=(-1.1, -1.0),
+        detrend=1,
+        # reject=dict(eeg=250e-5),
         # picks=None,
-        # picks=plt_chans,
         preload=True,
     )
 
     return epochs
 
 
-def load_epochs(data_dir_epochs, subject, trial_mat):
-    epochs = mne.io.read_epochs_eeglab(
-        data_dir_epochs + "sub-" + subject[-2:] + "_task-touchdecoding_continuous.set"
-    )
+def run_spatio_temporal(epochs):
 
-    # TODO: Clarify mode == visual is and what else is possible / interesting
-    # finger | mode == visual
-    target = trial_mat[:, 5]
-    trial_mat = trial_mat[target == 1, :]
-    events_finger = epochs.events[(epochs.events[:, 2] == 1) & (target == 1), :]
-    events_finger[:, 2] = trial_mat[:, 2]
-    visual_ind = trial_mat[:, 0] == 1
-    tactile_ind = trial_mat[:, 0] == 2
-    events_finger[tactile_ind, 2] += 2
-    events_finger_dict = {
-        "visual_thumb": 1,
-        "visual_pinky": 2,
-        "tactile_thumb": 3,
-        "tactile_pinky": 4,
-    }
-    epochs.events = events_finger
-
-    # resample to reduce compute time
-    epochs = epochs.resample(sfreq=90)
-
-    return epochs
-
-
-def run_time_gens(epochs):
     X = epochs.get_data()
     y = epochs.events[:, -1]
 
-   # TODO: down sample here for test purposes
+    n_splits = 3
 
-    n_splits = 12
+    # within mode: everything on touch
+    # touchtouch
+    XX = X[(y == 3) | (y == 4)]
+    yy = y[(y == 3) | (y == 4)]
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    cv = list(skf.split(XX, yy))
+    clf = make_pipeline(Scaler(epochs.info),
+                        Vectorizer(),
+                        LogisticRegression(solver="liblinear"))
+    scores_touchtouch = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # within mode: everything on vision
+    # visvis
+    XX = X[(y == 1) | (y == 2)]
+    yy = y[(y == 1) | (y == 2)]
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    cv = list(skf.split(XX, yy))
+    clf = make_pipeline(Scaler(epochs.info),
+                        Vectorizer(),
+                        LogisticRegression(solver="liblinear"))
+    scores_visvis = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # cross mode: train on touch / test on vision
+    # touchvis
+    XX = X.copy()
+    yy = y.copy()
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    train_ind = np.where((yy == 3) | (yy == 4))[0]
+    test_ind = np.where((yy == 1) | (yy == 2))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
+    np.random.shuffle(train_ind)
+    np.random.shuffle(test_ind)
+    train_ind = np.array_split(train_ind, n_splits)
+    test_ind = np.array_split(test_ind, n_splits)
+    cv = list(zip(train_ind, test_ind))
+    clf = make_pipeline(Scaler(epochs.info),
+                        Vectorizer(),
+                        LogisticRegression(solver="liblinear"))
+    scores_touchvis = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # cross mode: train on vision / test on touch
+    # vistouch
+    XX = X.copy()
+    yy = y.copy()
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    train_ind = np.where((yy == 1) | (yy == 2))[0]
+    test_ind = np.where((yy == 3) | (yy == 4))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
+    np.random.shuffle(train_ind)
+    np.random.shuffle(test_ind)
+    train_ind = np.array_split(train_ind, n_splits)
+    test_ind = np.array_split(test_ind, n_splits)
+    cv = list(zip(train_ind, test_ind))
+    clf = make_pipeline(Scaler(epochs.info),
+                        Vectorizer(),
+                        LogisticRegression(solver="liblinear"))
+    scores_vistouch = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    return (scores_touchtouch, scores_visvis, scores_touchvis, scores_vistouch)
+
+def run_csp(epochs):
+
+    X = epochs.get_data()
+    y = epochs.events[:, -1]
+
+    n_splits = 3
+
+    # within mode: everything on touch
+    # touchtouch
+    XX = X[(y == 3) | (y == 4)]
+    yy = y[(y == 3) | (y == 4)]
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    cv = list(skf.split(XX, yy))
+    csp = CSP(n_components=2, reg=None, log=True, norm_trace=False)
+    lda = LinearDiscriminantAnalysis()
+    clf = Pipeline([("CSP", csp), ("LDA", lda)])
+    scores_touchtouch = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # within mode: everything on vision
+    # visvis
+    XX = X[(y == 1) | (y == 2)]
+    yy = y[(y == 1) | (y == 2)]
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    cv = list(skf.split(XX, yy))
+    csp = CSP(n_components=2, reg=None, log=True, norm_trace=False)
+    lda = LinearDiscriminantAnalysis()
+    clf = Pipeline([("CSP", csp), ("LDA", lda)])
+    scores_visvis = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # cross mode: train on touch / test on vision
+    # touchvis
+    XX = X.copy()
+    yy = y.copy()
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    train_ind = np.where((yy == 3) | (yy == 4))[0]
+    test_ind = np.where((yy == 1) | (yy == 2))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
+    np.random.shuffle(train_ind)
+    np.random.shuffle(test_ind)
+    train_ind = np.array_split(train_ind, n_splits)
+    test_ind = np.array_split(test_ind, n_splits)
+    cv = list(zip(train_ind, test_ind))
+    csp = CSP(n_components=2, reg=None, log=True, norm_trace=False)
+    lda = LinearDiscriminantAnalysis()
+    clf = Pipeline([("CSP", csp), ("LDA", lda)])
+    scores_touchvis = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    # cross mode: train on vision / test on touch
+    # vistouch
+    XX = X.copy()
+    yy = y.copy()
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    train_ind = np.where((yy == 1) | (yy == 2))[0]
+    test_ind = np.where((yy == 3) | (yy == 4))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
+    np.random.shuffle(train_ind)
+    np.random.shuffle(test_ind)
+    train_ind = np.array_split(train_ind, n_splits)
+    test_ind = np.array_split(test_ind, n_splits)
+    cv = list(zip(train_ind, test_ind))
+    csp = CSP(n_components=2, reg=None, log=True, norm_trace=False)
+    lda = LinearDiscriminantAnalysis()
+    clf = Pipeline([("CSP", csp), ("LDA", lda)])
+    scores_vistouch = cross_val_multiscore(clf, XX, yy, cv=cv, n_jobs=1)
+
+    return (scores_touchtouch, scores_visvis, scores_touchvis, scores_vistouch)
+
+def run_time_gens(epochs):
+
+    X = epochs.get_data()
+    y = epochs.events[:, -1]
+
+    n_splits = 6
     metric = "accuracy"
 
     # within mode: everything on touch
@@ -279,7 +467,7 @@ def run_time_gens(epochs):
     clf = LinearDiscriminantAnalysis(solver="svd")
     pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
     time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
-    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = cross_val_multiscore(time_gen, XX, yy, cv=cv, n_jobs=-1)
     scores = np.mean(scores, 0)
     scores_touchtouch = scores
 
@@ -292,16 +480,18 @@ def run_time_gens(epochs):
     clf = LinearDiscriminantAnalysis(solver="svd")
     pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
     time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
-    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = cross_val_multiscore(time_gen, XX, yy, cv=cv, n_jobs=-1)
     scores = np.mean(scores, 0)
     scores_visvis = scores
 
     # cross mode: train on touch / test on vision
     # touchvis
-    XX = X
-    yy = y
+    XX = X.copy()
+    yy = y.copy()
     train_ind = np.where((yy == 3) | (yy == 4))[0]
     test_ind = np.where((yy == 1) | (yy == 2))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
     np.random.shuffle(train_ind)
     np.random.shuffle(test_ind)
     train_ind = np.array_split(train_ind, n_splits)
@@ -309,16 +499,18 @@ def run_time_gens(epochs):
     cv = list(zip(train_ind, test_ind))
     pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
     time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
-    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = cross_val_multiscore(time_gen, XX, yy, cv=cv, n_jobs=-1)
     scores = np.mean(scores, 0)
     scores_touchvis = scores
 
     # cross mode: train on vision / test on touch
     # vistouch
-    XX = X
-    yy = y
+    XX = X.copy()
+    yy = y.copy()
     train_ind = np.where((yy == 1) | (yy == 2))[0]
     test_ind = np.where((yy == 3) | (yy == 4))[0]
+    yy[yy == 3] = 1
+    yy[yy == 4] = 2
     np.random.shuffle(train_ind)
     np.random.shuffle(test_ind)
     train_ind = np.array_split(train_ind, n_splits)
@@ -327,7 +519,7 @@ def run_time_gens(epochs):
     clf = LinearDiscriminantAnalysis(solver="svd")
     pipe = Pipeline([("scl", Scaler(epochs.info)), ("vec", Vectorizer()), ("clf", clf)])
     time_gen = GeneralizingEstimator(pipe, n_jobs=-1, scoring=metric, verbose=True)
-    scores = cross_val_multiscore(time_gen, X, y, cv=cv, n_jobs=-1)
+    scores = cross_val_multiscore(time_gen, XX, yy, cv=cv, n_jobs=-1)
     scores = np.mean(scores, 0)
     scores_vistouch = scores
 
